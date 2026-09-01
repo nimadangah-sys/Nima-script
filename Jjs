@@ -1,0 +1,846 @@
+--// Eizen Hub | Rayfield Edition | Auto Farm Fixed
+
+local Rayfield = loadstring(game:HttpGet("https://sirius.menu/rayfield"))()
+
+--// Services
+local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
+local UIS = game:GetService("UserInputService")
+local HttpService = game:GetService("HttpService")
+local TeleportService = game:GetService("TeleportService")
+local VirtualUser = game:GetService("VirtualUser")
+local Player = Players.LocalPlayer
+local Camera = workspace.CurrentCamera
+
+--// Window
+local Window = Rayfield:CreateWindow({
+    Name = "Eizen Hub | Blox Fruits",
+    LoadingTitle = "Eizen Hub",
+    LoadingSubtitle = "by Nima",
+    ConfigurationSaving = {Enabled = true, FolderName = "EizenHub", FileName = "Config"},
+    KeySystem = false
+})
+
+--// Tabs
+local FarmTab = Window:CreateTab("Farm", 4483362458)
+local CombatTab = Window:CreateTab("Combat", 4483362458)
+local TeleportTab = Window:CreateTab("Teleport", 4483362458)
+local ESPTab = Window:CreateTab("ESP", 4483362458)
+local PlayerTab = Window:CreateTab("Player", 4483362458)
+local MiscTab = Window:CreateTab("Misc", 4483362458)
+
+--// Settings
+getgenv().Eizen = {
+    AutoFarm = false,
+    FastAttack = false,
+    AttackDelay = 0.1,
+    FarmRange = 200,
+    SelectedQuest = "Bandit",
+    AutoQuest = false,
+    KillAura = false,
+    AuraRange = 25,
+    ESPPlayers = false,
+    ESPMob = false,
+    ESPFruit = false,
+    ESPChest = false,
+    ESPDistance = false,
+    Fly = false,
+    FlySpeed = 80,
+    Noclip = false,
+    InfiniteJump = false,
+    SpeedHack = false,
+    SpeedValue = 32,
+    WalkOnWater = false,
+    AntiAFK = true,
+    BringMob = false,
+    TeleportIsland = "Starter Island"
+}
+local S = getgenv().Eizen
+
+--// Quests (with correct QuestGiver positions)
+local Quests = {
+    ["Bandit"] = {
+        Mob = "Bandit",
+        MobLevel = 5,
+        QGiverPos = CFrame.new(1060, 16, 1550),
+        QGiverName = "Quest Bandit",
+        AreaPos = CFrame.new(1037, 16, 1544)
+    },
+    ["Monkey"] = {
+        Mob = "Monkey",
+        MobLevel = 14,
+        QGiverPos = CFrame.new(-1605, 36, 153),
+        QGiverName = "Quest Monkey",
+        AreaPos = CFrame.new(-1496, 35, 150)
+    },
+    ["Gorilla"] = {
+        Mob = "Gorilla",
+        MobLevel = 20,
+        QGiverPos = CFrame.new(-1605, 36, 153),
+        QGiverName = "Quest Gorilla",
+        AreaPos = CFrame.new(-1300, 30, 100)
+    },
+    ["Pirate"] = {
+        Mob = "Pirate",
+        MobLevel = 35,
+        QGiverPos = CFrame.new(-1140, 16, 3826),
+        QGiverName = "Quest Pirate",
+        AreaPos = CFrame.new(-1000, 15, 3900)
+    },
+    ["Brute"] = {
+        Mob = "Brute",
+        MobLevel = 45,
+        QGiverPos = CFrame.new(-1140, 16, 3826),
+        QGiverName = "Quest Brute",
+        AreaPos = CFrame.new(-1100, 15, 3800)
+    },
+    ["Desert Bandit"] = {
+        Mob = "Desert Bandit",
+        MobLevel = 60,
+        QGiverPos = CFrame.new(935, 6, 4484),
+        QGiverName = "Quest Desert Bandit",
+        AreaPos = CFrame.new(900, 7, 4500)
+    },
+    ["Desert Officer"] = {
+        Mob = "Desert Officer",
+        MobLevel = 70,
+        QGiverPos = CFrame.new(935, 6, 4484),
+        QGiverName = "Quest Desert Officer",
+        AreaPos = CFrame.new(880, 7, 4520)
+    },
+    ["Snow Bandit"] = {
+        Mob = "Snow Bandit",
+        MobLevel = 90,
+        QGiverPos = CFrame.new(-1347, 71, -1384),
+        QGiverName = "Quest Snow Bandit",
+        AreaPos = CFrame.new(-1350, 70, -1400)
+    },
+    ["Snowman"] = {
+        Mob = "Snowman",
+        MobLevel = 100,
+        QGiverPos = CFrame.new(-1347, 71, -1384),
+        QGiverName = "Quest Snowman",
+        AreaPos = CFrame.new(-1320, 70, -1380)
+    },
+    ["Chief Petty Officer"] = {
+        Mob = "Chief Petty Officer",
+        MobLevel = 120,
+        QGiverPos = CFrame.new(-4971, 72, 3904),
+        QGiverName = "Quest Chief Petty Officer",
+        AreaPos = CFrame.new(-4900, 73, 3900)
+    },
+    ["Sky Bandit"] = {
+        Mob = "Sky Bandit",
+        MobLevel = 150,
+        QGiverPos = CFrame.new(-4971, 72, 3904),
+        QGiverName = "Quest Sky Bandit",
+        AreaPos = CFrame.new(-4950, 73, 3950)
+    },
+    ["Dark Master"] = {
+        Mob = "Dark Master",
+        MobLevel = 175,
+        QGiverPos = CFrame.new(-4971, 72, 3904),
+        QGiverName = "Quest Dark Master",
+        AreaPos = CFrame.new(-4920, 73, 4000)
+    },
+    ["Prisoner"] = {
+        Mob = "Prisoner",
+        MobLevel = 190,
+        QGiverPos = CFrame.new(5294, 0, 389),
+        QGiverName = "Quest Prisoner",
+        AreaPos = CFrame.new(5300, 0, 400)
+    },
+    ["Dangerous Prisoner"] = {
+        Mob = "Dangerous Prisoner",
+        MobLevel = 210,
+        QGiverPos = CFrame.new(5294, 0, 389),
+        QGiverName = "Quest Dangerous Prisoner",
+        AreaPos = CFrame.new(5280, 0, 380)
+    },
+    ["Toga Warrior"] = {
+        Mob = "Toga Warrior",
+        MobLevel = 225,
+        QGiverPos = CFrame.new(-1623, 73, 2072),
+        QGiverName = "Quest Toga Warrior",
+        AreaPos = CFrame.new(-1600, 73, 2080)
+    },
+    ["Gladiator"] = {
+        Mob = "Gladiator",
+        MobLevel = 235,
+        QGiverPos = CFrame.new(-1623, 73, 2072),
+        QGiverName = "Quest Gladiator",
+        AreaPos = CFrame.new(-1640, 73, 2050)
+    },
+    ["Military Soldier"] = {
+        Mob = "Military Soldier",
+        MobLevel = 245,
+        QGiverPos = CFrame.new(-7791, 46, 2094),
+        QGiverName = "Quest Military Soldier",
+        AreaPos = CFrame.new(-7800, 46, 2100)
+    },
+    ["Military Spy"] = {
+        Mob = "Military Spy",
+        MobLevel = 250,
+        QGiverPos = CFrame.new(-7791, 46, 2094),
+        QGiverName = "Quest Military Spy",
+        AreaPos = CFrame.new(-7780, 46, 2080)
+    },
+    ["Fishman Warrior"] = {
+        Mob = "Fishman Warrior",
+        MobLevel = 375,
+        QGiverPos = CFrame.new(61122, 18, 1569),
+        QGiverName = "Quest Fishman Warrior",
+        AreaPos = CFrame.new(61100, 18, 1570)
+    },
+    ["Fishman Commando"] = {
+        Mob = "Fishman Commando",
+        MobLevel = 400,
+        QGiverPos = CFrame.new(61122, 18, 1569),
+        QGiverName = "Quest Fishman Commando",
+        AreaPos = CFrame.new(61080, 18, 1550)
+    },
+    ["God's Guard"] = {
+        Mob = "God's Guard",
+        MobLevel = 450,
+        QGiverPos = CFrame.new(-5443, 17, 7521),
+        QGiverName = "Quest God's Guard",
+        AreaPos = CFrame.new(-5450, 17, 7520)
+    },
+    ["Royal Squad"] = {
+        Mob = "Royal Squad",
+        MobLevel = 475,
+        QGiverPos = CFrame.new(-5443, 17, 7521),
+        QGiverName = "Quest Royal Squad",
+        AreaPos = CFrame.new(-5430, 17, 7500)
+    },
+    ["Royal Soldier"] = {
+        Mob = "Royal Soldier",
+        MobLevel = 500,
+        QGiverPos = CFrame.new(-5443, 17, 7521),
+        QGiverName = "Quest Royal Soldier",
+        AreaPos = CFrame.new(-5460, 17, 7540)
+    },
+    ["Galley Pirate"] = {
+        Mob = "Galley Pirate",
+        MobLevel = 575,
+        QGiverPos = CFrame.new(5620, 82, 5070),
+        QGiverName = "Quest Galley Pirate",
+        AreaPos = CFrame.new(5600, 82, 5070)
+    },
+    ["Galley Captain"] = {
+        Mob = "Galley Captain",
+        MobLevel = 600,
+        QGiverPos = CFrame.new(5620, 82, 5070),
+        QGiverName = "Quest Galley Captain",
+        AreaPos = CFrame.new(5640, 82, 5050)
+    },
+    ["Warden"] = {
+        Mob = "Warden",
+        MobLevel = 625,
+        QGiverPos = CFrame.new(5053, 803, 1529),
+        QGiverName = "Quest Warden",
+        AreaPos = CFrame.new(5050, 803, 1530)
+    },
+    ["Chief Warden"] = {
+        Mob = "Chief Warden",
+        MobLevel = 650,
+        QGiverPos = CFrame.new(5053, 803, 1529),
+        QGiverName = "Quest Chief Warden",
+        AreaPos = CFrame.new(5030, 803, 1510)
+    },
+    ["Swan"] = {
+        Mob = "Swan",
+        MobLevel = 700,
+        QGiverPos = CFrame.new(897, 81, 5067),
+        QGiverName = "Quest Swan",
+        AreaPos = CFrame.new(900, 81, 5070)
+    },
+    ["Magma Admiral"] = {
+        Mob = "Magma Admiral",
+        MobLevel = 750,
+        QGiverPos = CFrame.new(-5310, 32, 8425),
+        QGiverName = "Quest Magma Admiral",
+        AreaPos = CFrame.new(-5300, 32, 8420)
+    },
+    ["Fishman Lord"] = {
+        Mob = "Fishman Lord",
+        MobLevel = 800,
+        QGiverPos = CFrame.new(61122, 18, 1569),
+        QGiverName = "Quest Fishman Lord",
+        AreaPos = CFrame.new(61100, 18, 1500)
+    },
+    ["Warlord"] = {
+        Mob = "Warlord",
+        MobLevel = 850,
+        QGiverPos = CFrame.new(5964, 1587, 855),
+        QGiverName = "Quest Warlord",
+        AreaPos = CFrame.new(5960, 1587, 855)
+    },
+    ["Marine Admiral"] = {
+        Mob = "Marine Admiral",
+        MobLevel = 900,
+        QGiverPos = CFrame.new(-1230, 80, 5310),
+        QGiverName = "Quest Marine Admiral",
+        AreaPos = CFrame.new(-1230, 80, 5310)
+    }
+}
+
+--// Islands
+local Islands = {
+    ["Starter Island"] = CFrame.new(1057, 16, 1550),
+    ["Jungle"] = CFrame.new(-1606, 36, 153),
+    ["Buggy"] = CFrame.new(-1140, 16, 3826),
+    ["Desert"] = CFrame.new(932, 6, 4484),
+    ["Snow"] = CFrame.new(-1347, 71, -1384),
+    ["Marine Fortress"] = CFrame.new(-4971, 72, 3904),
+    ["Prison"] = CFrame.new(5294, 0, 389),
+    ["Colosseum"] = CFrame.new(-1623, 73, 2072),
+    ["Magma Village"] = CFrame.new(-5310, 32, 8425),
+    ["Underwater"] = CFrame.new(61122, 18, 1569),
+    ["Fountain City"] = CFrame.new(5620, 82, 5070),
+    ["Castle on the Sea"] = CFrame.new(5053, 803, 1529),
+    ["Hydra Island"] = CFrame.new(5964, 1587, 855),
+    ["Great Tree"] = CFrame.new(2681, 168, -7180),
+    ["Floating Turtle"] = CFrame.new(-13206, 533, -7572),
+    ["Cafe"] = CFrame.new(-380, 73, 255)
+}
+
+--// Helpers
+local function Char() return Player.Character or Player.CharacterAdded:Wait() end
+local function HRP() local c = Char(); return c and c:FindFirstChild("HumanoidRootPart") end
+local function HUM() local c = Char(); return c and c:FindFirstChildOfClass("Humanoid") end
+
+local function GetAllEnemies()
+    local list = {}
+    pcall(function()
+        for _, v in pairs(workspace.Enemies:GetChildren()) do
+            if v:FindFirstChild("HumanoidRootPart") and v:FindFirstChild("Humanoid") and v.Humanoid.Health > 0 then
+                table.insert(list, v)
+            end
+        end
+    end)
+    return list
+end
+
+local function GetClosestEnemy()
+    local hrp = HRP()
+    if not hrp then return nil, math.huge end
+    local best, bestd = nil, math.huge
+    for _, v in pairs(GetAllEnemies()) do
+        local d = (v.HumanoidRootPart.Position - hrp.Position).Magnitude
+        if d < bestd then
+            bestd = d
+            best = v
+        end
+    end
+    return best, bestd
+end
+
+local function GetTargetEnemy(mobName)
+    local hrp = HRP()
+    if not hrp then return nil, math.huge end
+    local best, bestd = nil, math.huge
+    for _, v in pairs(GetAllEnemies()) do
+        if v.Name == mobName then
+            local d = (v.HumanoidRootPart.Position - hrp.Position).Magnitude
+            if d < bestd then
+                bestd = d
+                best = v
+            end
+        end
+    end
+    return best, bestd
+end
+
+local function EquipAnyWeapon()
+    pcall(function()
+        local char = Char()
+        local hum = HUM()
+        if not hum then return end
+        for _, v in pairs(Player.Backpack:GetChildren()) do
+            if v:IsA("Tool") then
+                hum:EquipTool(v)
+                return true
+            end
+        end
+    end)
+    return false
+end
+
+local function HasQuest(mobName)
+    local has = false
+    pcall(function()
+        local questFolder = Player:FindFirstChild("Quests")
+        if questFolder then
+            for _, q in pairs(questFolder:GetChildren()) do
+                if q.Value == mobName or (typeof(q) == "Instance" and q.Name == mobName) then
+                    has = true
+                end
+            end
+        end
+    end)
+    return has
+end
+
+local function GetQuestGiver(mobName)
+    local targetName = "Quest "..mobName
+    for _, v in pairs(workspace:GetDescendants()) do
+        if v:IsA("ClickDetector") and v.Parent and v.Parent.Name == targetName then
+            return v
+        end
+    end
+    for _, v in pairs(workspace:GetDescendants()) do
+        if v:IsA("ClickDetector") and v.Parent and v.Parent.Name:find("Quest") then
+            return v
+        end
+    end
+    return nil
+end
+
+--// ============================================
+--// FARM TAB
+--// ============================================
+local QuestNames = {}
+for n, _ in pairs(Quests) do table.insert(QuestNames, n) end
+
+FarmTab:CreateSection("Auto Farm")
+
+FarmTab:CreateDropdown({
+    Name = "Select Quest",
+    Options = QuestNames,
+    CurrentOption = "Bandit",
+    Flag = "QuestDropdown",
+    Callback = function(Option) S.SelectedQuest = Option end
+})
+
+FarmTab:CreateToggle({
+    Name = "Auto Get Quest",
+    CurrentValue = false,
+    Flag = "AutoQuest",
+    Callback = function(v) S.AutoQuest = v end
+})
+
+FarmTab:CreateToggle({
+    Name = "Auto Farm",
+    CurrentValue = false,
+    Flag = "AutoFarm",
+    Callback = function(v) S.AutoFarm = v end
+})
+
+FarmTab:CreateToggle({
+    Name = "Bring Mob to You",
+    CurrentValue = false,
+    Flag = "BringMob",
+    Callback = function(v) S.BringMob = v end
+})
+
+FarmTab:CreateSlider({
+    Name = "Farm Range",
+    Range = {50, 500},
+    Increment = 10,
+    Suffix = " studs",
+    CurrentValue = 200,
+    Flag = "FarmRange",
+    Callback = function(v) S.FarmRange = v end
+})
+
+--// ============================================
+--// COMBAT TAB
+--// ============================================
+CombatTab:CreateSection("Combat")
+
+CombatTab:CreateToggle({
+    Name = "Fast Attack",
+    CurrentValue = false,
+    Flag = "FastAttack",
+    Callback = function(v) S.FastAttack = v end
+})
+
+CombatTab:CreateSlider({
+    Name = "Attack Speed (Delay)",
+    Range = {0.05, 1},
+    Increment = 0.05,
+    Suffix = " sec",
+    CurrentValue = 0.1,
+    Flag = "AttackSpeed",
+    Callback = function(v) S.AttackDelay = v end
+})
+
+CombatTab:CreateToggle({
+    Name = "Kill Aura",
+    CurrentValue = false,
+    Flag = "KillAura",
+    Callback = function(v) S.KillAura = v end
+})
+
+CombatTab:CreateSlider({
+    Name = "Aura Range",
+    Range = {10, 60},
+    Increment = 5,
+    Suffix = " studs",
+    CurrentValue = 25,
+    Flag = "AuraRange",
+    Callback = function(v) S.AuraRange = v end
+})
+
+--// ============================================
+--// TELEPORT TAB
+--// ============================================
+local IslandNames = {}
+for n, _ in pairs(Islands) do table.insert(IslandNames, n) end
+
+TeleportTab:CreateSection("Teleport")
+
+TeleportTab:CreateDropdown({
+    Name = "Select Island",
+    Options = IslandNames,
+    CurrentOption = "Starter Island",
+    Flag = "IslandDropdown",
+    Callback = function(Option) S.TeleportIsland = Option end
+})
+
+TeleportTab:CreateButton({
+    Name = "Teleport to Island",
+    Callback = function()
+        local hrp = HRP()
+        if hrp and Islands[S.TeleportIsland] then
+            hrp.CFrame = Islands[S.TeleportIsland]
+        end
+    end
+})
+
+TeleportTab:CreateButton({
+    Name = "Teleport to Nearest Mob",
+    Callback = function()
+        local hrp = HRP()
+        local e, d = GetClosestEnemy()
+        if hrp and e and d < 2000 then
+            hrp.CFrame = e.HumanoidRootPart.CFrame * CFrame.new(0, 0, 5)
+        end
+    end
+})
+
+--// ============================================
+--// ESP TAB
+--// ============================================
+ESPTab:CreateSection("ESP")
+
+ESPTab:CreateToggle({Name = "ESP Players", CurrentValue = false, Flag = "ESPPlayers", Callback = function(v) S.ESPPlayers = v end})
+ESPTab:CreateToggle({Name = "ESP Mobs", CurrentValue = false, Flag = "ESPMob", Callback = function(v) S.ESPMob = v end})
+ESPTab:CreateToggle({Name = "ESP Fruits", CurrentValue = false, Flag = "ESPFruit", Callback = function(v) S.ESPFruit = v end})
+ESPTab:CreateToggle({Name = "ESP Chests", CurrentValue = false, Flag = "ESPChest", Callback = function(v) S.ESPChest = v end})
+ESPTab:CreateToggle({Name = "Show Distance", CurrentValue = false, Flag = "ESPDistance", Callback = function(v) S.ESPDistance = v end})
+
+--// ============================================
+--// PLAYER TAB
+--// ============================================
+PlayerTab:CreateSection("Movement")
+
+PlayerTab:CreateToggle({Name = "Fly (WASD + Space/Ctrl)", CurrentValue = false, Flag = "Fly", Callback = function(v) S.Fly = v end})
+PlayerTab:CreateSlider({Name = "Fly Speed", Range = {20, 300}, Increment = 10, CurrentValue = 80, Flag = "FlySpeed", Callback = function(v) S.FlySpeed = v end})
+PlayerTab:CreateToggle({Name = "Noclip", CurrentValue = false, Flag = "Noclip", Callback = function(v) S.Noclip = v end})
+PlayerTab:CreateToggle({Name = "Infinite Jump", CurrentValue = false, Flag = "InfJump", Callback = function(v) S.InfiniteJump = v end})
+PlayerTab:CreateToggle({Name = "Speed Hack", CurrentValue = false, Flag = "SpeedHack", Callback = function(v) S.SpeedHack = v end})
+PlayerTab:CreateSlider({Name = "Walk Speed", Range = {16, 200}, Increment = 5, CurrentValue = 32, Flag = "SpeedValue", Callback = function(v) S.SpeedValue = v end})
+PlayerTab:CreateToggle({Name = "Walk on Water", CurrentValue = false, Flag = "WalkOnWater", Callback = function(v) S.WalkOnWater = v end})
+
+--// ============================================
+--// MISC TAB
+--// ============================================
+MiscTab:CreateSection("Misc")
+
+MiscTab:CreateToggle({Name = "Anti AFK", CurrentValue = true, Flag = "AntiAFK", Callback = function(v) S.AntiAFK = v end})
+MiscTab:CreateButton({Name = "Rejoin Server", Callback = function() TeleportService:TeleportToPlaceInstance(game.PlaceId, game.JobId, Player) end})
+MiscTab:CreateButton({Name = "Server Hop", Callback = function()
+    pcall(function()
+        local res = HttpService:JSONDecode(game:HttpGet("https://games.roblox.com/v1/games/"..game.PlaceId.."/servers/Public?sortOrder=Asc&limit=100"))
+        for _, s in pairs(res.data) do
+            if s.playing < s.maxPlayers and s.id ~= game.JobId then
+                TeleportService:TeleportToPlaceInstance(game.PlaceId, s.id, Player)
+                break
+            end
+        end
+    end)
+end})
+MiscTab:CreateButton({Name = "Destroy GUI", Callback = function() Rayfield:Destroy() end})
+
+--// ============================================
+--// LOOPS
+--// ============================================
+
+--// Fast Attack
+task.spawn(function()
+    while task.wait() do
+        if S.FastAttack then
+            pcall(function()
+                local hrp = HRP()
+                if not hrp then return end
+                for _, e in pairs(GetAllEnemies()) do
+                    if (e.HumanoidRootPart.Position - hrp.Position).Magnitude < 50 then
+                        local tool = Char():FindFirstChildOfClass("Tool")
+                        if tool then tool:Activate() end
+                        task.wait(S.AttackDelay)
+                        break
+                    end
+                end
+            end)
+        end
+    end
+end)
+
+--// Kill Aura
+task.spawn(function()
+    while task.wait() do
+        if S.KillAura then
+            pcall(function()
+                local hrp = HRP()
+                if not hrp then return end
+                for _, e in pairs(GetAllEnemies()) do
+                    if (e.HumanoidRootPart.Position - hrp.Position).Magnitude < S.AuraRange then
+                        local tool = Char():FindFirstChildOfClass("Tool")
+                        if tool then tool:Activate() end
+                        task.wait(0.05)
+                    end
+                end
+            end)
+        end
+    end
+end)
+
+--// Auto Farm (FIXED)
+task.spawn(function()
+    while task.wait() do
+        if S.AutoFarm then
+            pcall(function()
+                local hrp = HRP()
+                local hum = HUM()
+                if not hrp or not hum then return end
+
+                local quest = Quests[S.SelectedQuest]
+                if not quest then return end
+
+                -- Auto Get Quest
+                if S.AutoQuest and not HasQuest(quest.Mob) then
+                    hrp.CFrame = quest.QGiverPos
+                    task.wait(1.5)
+
+                    pcall(function()
+                        local cd = GetQuestGiver(quest.Mob)
+                        if cd then
+                            fireclickdetector(cd)
+                        end
+                    end)
+
+                    task.wait(0.8)
+                end
+
+                -- Find target
+                local target, dist = GetTargetEnemy(quest.Mob)
+
+                if not target then
+                    target, dist = GetClosestEnemy()
+                end
+
+                if target and dist < S.FarmRange then
+                    if S.BringMob then
+                        target.HumanoidRootPart.CFrame = hrp.CFrame * CFrame.new(math.random(-2,2), 0, math.random(-2,2))
+                    end
+
+                    EquipAnyWeapon()
+
+                    local tool = Char():FindFirstChildOfClass("Tool")
+                    if tool then
+                        tool:Activate()
+                    end
+
+                    if (target.HumanoidRootPart.Position - hrp.Position).Magnitude > 10 then
+                        hrp.CFrame = target.HumanoidRootPart.CFrame * CFrame.new(0, 0, 3)
+                    end
+                else
+                    hrp.CFrame = quest.AreaPos
+                end
+            end)
+        end
+    end
+end)
+
+--// Fly
+local flyBV, flyBG
+RunService.RenderStepped:Connect(function()
+    pcall(function()
+        local hrp = HRP()
+        local hum = HUM()
+        if not hrp or not hum then return end
+
+        if S.Fly then
+            if not flyBV then
+                flyBV = Instance.new("BodyVelocity", hrp)
+                flyBV.MaxForce = Vector3.new(math.huge, math.huge, math.huge)
+                flyBG = Instance.new("BodyGyro", hrp)
+                flyBG.MaxTorque = Vector3.new(math.huge, math.huge, math.huge)
+                flyBG.P = 9e4
+            end
+            hum.PlatformStand = true
+            local dir = Vector3.new(0, 0, 0)
+            if UIS:IsKeyDown(Enum.KeyCode.W) then dir = dir + Camera.CFrame.LookVector end
+            if UIS:IsKeyDown(Enum.KeyCode.S) then dir = dir - Camera.CFrame.LookVector end
+            if UIS:IsKeyDown(Enum.KeyCode.A) then dir = dir - Camera.CFrame.RightVector end
+            if UIS:IsKeyDown(Enum.KeyCode.D) then dir = dir + Camera.CFrame.RightVector end
+            if UIS:IsKeyDown(Enum.KeyCode.Space) then dir = dir + Vector3.new(0, 1, 0) end
+            if UIS:IsKeyDown(Enum.KeyCode.LeftControl) then dir = dir - Vector3.new(0, 1, 0) end
+            flyBV.Velocity = dir * S.FlySpeed
+            flyBG.CFrame = Camera.CFrame
+        else
+            if flyBV then flyBV:Destroy() flyBV = nil end
+            if flyBG then flyBG:Destroy() flyBG = nil end
+            hum.PlatformStand = false
+        end
+
+        if S.Noclip then
+            for _, p in pairs(Char():GetDescendants()) do
+                if p:IsA("BasePart") then p.CanCollide = false end
+            end
+        end
+
+        if S.WalkOnWater and hum.FloorMaterial == Enum.Material.Water then
+            hrp.CFrame = CFrame.new(hrp.Position.X, 5, hrp.Position.Z)
+        end
+    end)
+end)
+
+--// Infinite Jump
+UIS.JumpRequest:Connect(function()
+    if S.InfiniteJump then
+        local hum = HUM()
+        if hum then hum:ChangeState(Enum.HumanoidStateType.Jumping) end
+    end
+end)
+
+--// Speed
+task.spawn(function()
+    while task.wait() do
+        pcall(function()
+            local hum = HUM()
+            if hum then
+                hum.WalkSpeed = S.SpeedHack and S.SpeedValue or 16
+            end
+        end)
+    end
+end)
+
+--// Anti AFK
+task.spawn(function()
+    while task.wait(60) do
+        if S.AntiAFK then
+            pcall(function()
+                VirtualUser:CaptureController()
+                VirtualUser:ClickButton2(Vector2.new())
+            end)
+        end
+    end
+end)
+
+--// ESP
+pcall(function() if game.CoreGui:FindFirstChild("EizenESP") then game.CoreGui.EizenESP:Destroy() end end)
+local ESPFolder = Instance.new("Folder")
+ESPFolder.Name = "EizenESP"
+ESPFolder.Parent = game.CoreGui
+
+task.spawn(function()
+    while task.wait(0.3) do
+        pcall(function()
+            for _, v in pairs(ESPFolder:GetChildren()) do v:Destroy() end
+            local hrp = HRP()
+
+            if S.ESPPlayers and hrp then
+                for _, p in pairs(Players:GetPlayers()) do
+                    if p ~= Player and p.Character and p.Character:FindFirstChild("HumanoidRootPart") and p.Character:FindFirstChildOfClass("Humanoid") and p.Character:FindFirstChildOfClass("Humanoid").Health > 0 then
+                        local bb = Instance.new("BillboardGui")
+                        bb.Adornee = p.Character.HumanoidRootPart
+                        bb.Size = UDim2.new(0, 200, 0, 50)
+                        bb.StudsOffset = Vector3.new(0, 3, 0)
+                        bb.AlwaysOnTop = true
+                        bb.Parent = ESPFolder
+                        local t = Instance.new("TextLabel", bb)
+                        t.Size = UDim2.new(1, 0, 1, 0)
+                        t.BackgroundTransparency = 1
+                        t.Font = Enum.Font.GothamBold
+                        t.TextSize = 14
+                        t.TextStrokeColor3 = Color3.new(0, 0, 0)
+                        t.TextStrokeTransparency = 0
+                        t.TextColor3 = Color3.fromRGB(0, 200, 255)
+                        t.Text = S.ESPDistance and (p.Name.." ["..math.floor((p.Character.HumanoidRootPart.Position - hrp.Position).Magnitude).."m]") or p.Name
+                    end
+                end
+            end
+
+            if S.ESPMob and hrp then
+                for _, m in pairs(workspace.Enemies:GetChildren()) do
+                    if m:FindFirstChild("HumanoidRootPart") and m:FindFirstChild("Humanoid") and m.Humanoid.Health > 0 then
+                        local bb = Instance.new("BillboardGui")
+                        bb.Adornee = m.HumanoidRootPart
+                        bb.Size = UDim2.new(0, 200, 0, 50)
+                        bb.StudsOffset = Vector3.new(0, 3, 0)
+                        bb.AlwaysOnTop = true
+                        bb.Parent = ESPFolder
+                        local t = Instance.new("TextLabel", bb)
+                        t.Size = UDim2.new(1, 0, 1, 0)
+                        t.BackgroundTransparency = 1
+                        t.Font = Enum.Font.GothamBold
+                        t.TextSize = 14
+                        t.TextStrokeColor3 = Color3.new(0, 0, 0)
+                        t.TextStrokeTransparency = 0
+                        t.TextColor3 = Color3.fromRGB(255, 60, 60)
+                        t.Text = S.ESPDistance and (m.Name.." ["..math.floor((m.HumanoidRootPart.Position - hrp.Position).Magnitude).."m]") or m.Name
+                    end
+                end
+            end
+
+            if S.ESPFruit then
+                for _, f in pairs(workspace:GetDescendants()) do
+                    if f:IsA("Tool") and f:FindFirstChild("Handle") then
+                        local bb = Instance.new("BillboardGui")
+                        bb.Adornee = f.Handle
+                        bb.Size = UDim2.new(0, 200, 0, 50)
+                        bb.StudsOffset = Vector3.new(0, 3, 0)
+                        bb.AlwaysOnTop = true
+                        bb.Parent = ESPFolder
+                        local t = Instance.new("TextLabel", bb)
+                        t.Size = UDim2.new(1, 0, 1, 0)
+                        t.BackgroundTransparency = 1
+                        t.Font = Enum.Font.GothamBold
+                        t.TextSize = 14
+                        t.TextStrokeColor3 = Color3.new(0, 0, 0)
+                        t.TextStrokeTransparency = 0
+                        t.TextColor3 = Color3.fromRGB(255, 255, 0)
+                        t.Text = "F: "..f.Name
+                    end
+                end
+            end
+
+            if S.ESPChest then
+                for _, c in pairs(workspace:GetDescendants()) do
+                    if (c.Name:lower():find("chest") or c.Name:lower():find("storage")) and c:IsA("Model") and c:FindFirstChildOfClass("Part") then
+                        local bb = Instance.new("BillboardGui")
+                        bb.Adornee = c:FindFirstChildOfClass("Part")
+                        bb.Size = UDim2.new(0, 200, 0, 50)
+                        bb.StudsOffset = Vector3.new(0, 3, 0)
+                        bb.AlwaysOnTop = true
+                        bb.Parent = ESPFolder
+                        local t = Instance.new("TextLabel", bb)
+                        t.Size = UDim2.new(1, 0, 1, 0)
+                        t.BackgroundTransparency = 1
+                        t.Font = Enum.Font.GothamBold
+                        t.TextSize = 14
+                        t.TextStrokeColor3 = Color3.new(0, 0, 0)
+                        t.TextStrokeTransparency = 0
+                        t.TextColor3 = Color3.fromRGB(255, 200, 0)
+                        t.Text = "C: "..c.Name
+                    end
+                end
+            end
+        end)
+    end
+end)
+
+Rayfield:Notify({Title = "Eizen Hub", Content = "Loaded! Select quest then enable Auto Farm", Duration = 6})
