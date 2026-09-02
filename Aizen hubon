@@ -1,64 +1,61 @@
---// Eizen Server Crusher | Full UI Edition
+--// Eizen Server Crusher | نسخه فارسی
 --// Replicatestore SendChat Flooder
 
 local Rayfield = loadstring(game:HttpGet("https://sirius.menu/rayfield"))()
 
---// Services
+--// سرویس‌ها
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local TextChatService = game:GetService("TextChatService")
-local StarterGui = game:GetService("StarterGui")
-local CoreGui = game:GetService("CoreGui")
 local HttpService = game:GetService("HttpService")
 local TeleportService = game:GetService("TeleportService")
 local RunService = game:GetService("RunService")
+local UIS = game:GetService("UserInputService")
 local Player = Players.LocalPlayer
+local Camera = workspace.CurrentCamera
 
---// Window
+--// پنجره اصلی
 local Window = Rayfield:CreateWindow({
     Name = "Eizen Server Crusher",
-    LoadingTitle = "Eizen Crusher",
+    LoadingTitle = "ایزن کرشر",
     LoadingSubtitle = "SendChat Flooder v2.0",
     ConfigurationSaving = {Enabled = false},
     KeySystem = false
 })
 
---// Tabs
-local MainTab = Window:CreateTab("Main", 4483362458)
-local ModeTab = Window:CreateTab("Modes", 4483362458)
-local ChatTab = Window:CreateTab("Chat", 4483362458)
-local PlayerTab = Window:CreateTab("Player", 4483362458)
-local SettingsTab = Window:CreateTab("Settings", 4483362458)
-local InfoTab = Window:CreateTab("Info", 4483362458)
+--// تب‌ها
+local MainTab = Window:CreateTab("اصلی", 4483362458)
+local ModeTab = Window:CreateTab("حالت‌ها", 4483362458)
+local ChatTab = Window:CreateTab("پیام", 4483362458)
+local PlayerTab = Window:CreateTab("پلیر", 4483362458)
+local SettingTab = Window:CreateTab("تنظیمات", 4483362458)
+local InfoTab = Window:CreateTab("اطلاعات", 4483362458)
 
---// Settings
+--// تنظیمات
 getgenv().Crusher = {
     Enabled = false,
-    Mode = "Spam",
     Delay = 0.01,
-    Message = "Eizen Hub On Top 🔥",
-    ChatSpamCount = 100,
+    Message = "𝗫𝘀𝗵𝗮𝗱𝗼𝘄/𝗛𝗮𝗰𝗸𝗲𝗿 op top",
     CustomMessage = "",
+    ChatSpamCount = 100,
     SpamMode = true,
     CrashMode = false,
     LagMode = false,
     KickMode = false,
     FloodServer = false,
-    SpamTextChat = false,
     SpamReplicatestore = true,
+    SpamTextChat = false,
     AutoRejoin = true,
-    HideUI = false,
-    BringAll = false,
-    SpamLoop = true,
-    TargetPlayer = "All",
+    InfiniteLoop = true,
     AntiKick = false,
-    SpeedValue = 50,
     FlyHack = false,
-    NoclipHack = false
+    NoclipHack = false,
+    SpeedValue = 16,
+    TargetPlayer = "همه"
 }
 local S = getgenv().Crusher
 
---// Find SendChat Remote
+--// پیدا کردن SendChat
 local function FindSendChat()
     local locations = {
         ReplicatedStorage:FindFirstChild("SendChat"),
@@ -110,30 +107,30 @@ end
 FindTextChatRemote()
 
 --// ============================================
---// MAIN TAB
+--// تب اصلی
 --// ============================================
-MainTab:CreateSection("⚡ Main Crusher")
+MainTab:CreateSection("⚡ کرشر اصلی")
 
 MainTab:CreateToggle({
-    Name = "🟢 Enable Server Crusher",
+    Name = "🟢 روشن کردن کرشر",
     CurrentValue = false,
     Flag = "Enabled",
     Callback = function(v) S.Enabled = v end
 })
 
 MainTab:CreateInput({
-    Name = "💬 Custom Message",
-    PlaceholderText = "Enter spam message...",
+    Name = "💬 پیام دلخواه",
+    PlaceholderText = "پیام خودت رو بنویس...",
     RemoveTextAfterFocusLost = false,
     Flag = "Message",
     Callback = function(v)
-        S.Message = v
         S.CustomMessage = v
+        if v ~= "" then S.Message = v end
     end
 })
 
 MainTab:CreateSlider({
-    Name = "⏱️ Spam Delay (seconds)",
+    Name = "⏱️ سرعت اسپم (ثانیه)",
     Range = {0.01, 1},
     Increment = 0.01,
     Suffix = "s",
@@ -143,166 +140,167 @@ MainTab:CreateSlider({
 })
 
 MainTab:CreateSlider({
-    Name = "📨 Messages per Loop",
+    Name = "📨 تعداد پیام در هر دور",
     Range = {1, 500},
     Increment = 10,
-    Suffix = " msgs",
+    Suffix = " عدد",
     CurrentValue = 100,
     Flag = "Count",
     Callback = function(v) S.ChatSpamCount = v end
 })
 
-MainTab:CreateSection("🎯 Quick Actions")
+MainTab:CreateSection("🎯 دکمه‌های سریع")
 
 MainTab:CreateButton({
-    Name = "🚀 START CRUSHER (Quick)",
+    Name = "🚀 شروع کرشر",
     Callback = function()
         S.Enabled = true
-        Rayfield:Notify({Title = "Eizen Crusher", Content = "Crusher Started!", Duration = 3})
+        Rayfield:Notify({Title = "ایزن کرشر", Content = "کرشر روشن شد!", Duration = 3})
     end
 })
 
 MainTab:CreateButton({
-    Name = "🛑 STOP CRUSHER",
+    Name = "🛑 توقف کرشر",
     Callback = function()
         S.Enabled = false
-        Rayfield:Notify({Title = "Eizen Crusher", Content = "Crusher Stopped!", Duration = 3})
+        Rayfield:Notify({Title = "ایزن کرشر", Content = "کرشر خاموش شد!", Duration = 3})
     end
 })
 
 MainTab:CreateButton({
-    Name = "🔄 Refresh SendChat Remote",
+    Name = "🔄 پیدا کردن دوباره SendChat",
     Callback = function()
         SendChat = FindSendChat()
         FindTextChatRemote()
         if SendChat then
-            Rayfield:Notify({Title = "Success", Content = "Found: "..SendChat.Name, Duration = 3})
+            Rayfield:Notify({Title = "موفق", Content = "پیدا شد: "..SendChat.Name, Duration = 3})
         else
-            Rayfield:Notify({Title = "Error", Content = "Not found!", Duration = 3})
+            Rayfield:Notify({Title = "خطا", Content = "پیدا نشد!", Duration = 3})
         end
     end
 })
 
 --// ============================================
---// MODES TAB
+--// تب حالت‌ها
 --// ============================================
-ModeTab:CreateSection("💥 Attack Modes")
+ModeTab:CreateSection("💥 حالت‌های حمله")
 
 ModeTab:CreateToggle({
-    Name = "📢 Chat Spam Mode",
+    Name = "📢 اسپم چت",
     CurrentValue = true,
     Flag = "SpamMode",
     Callback = function(v) S.SpamMode = v end
 })
 
 ModeTab:CreateToggle({
-    Name = "💣 Server Crash Mode",
+    Name = "💣 کرش سرور",
     CurrentValue = false,
     Flag = "CrashMode",
     Callback = function(v) S.CrashMode = v end
 })
 
 ModeTab:CreateToggle({
-    Name = "🐌 Server Lag Mode",
+    Name = "🐌 لگ سرور",
     CurrentValue = false,
     Flag = "LagMode",
     Callback = function(v) S.LagMode = v end
 })
 
 ModeTab:CreateToggle({
-    Name = "👢 Kick Players Mode",
+    Name = "👢 کیک پلیرها",
     CurrentValue = false,
     Flag = "KickMode",
     Callback = function(v) S.KickMode = v end
 })
 
 ModeTab:CreateToggle({
-    Name = "🌊 Flood Server",
+    Name = "🌊 سیل سرور",
     CurrentValue = false,
     Flag = "Flood",
     Callback = function(v) S.FloodServer = v end
 })
 
-ModeTab:CreateSection("🎯 Spam Type")
+ModeTab:CreateSection("🎯 نوع اسپم")
 
 ModeTab:CreateToggle({
-    Name = "Replicatestore Spam",
+    Name = "اسپم Replicatestore",
     CurrentValue = true,
     Flag = "RS_Spam",
     Callback = function(v) S.SpamReplicatestore = v end
 })
 
 ModeTab:CreateToggle({
-    Name = "TextChat Spam",
+    Name = "اسپم TextChat",
     CurrentValue = false,
     Flag = "TC_Spam",
     Callback = function(v) S.SpamTextChat = v end
 })
 
 --// ============================================
---// CHAT TAB
+--// تب پیام
 --// ============================================
-ChatTab:CreateSection("💬 Chat Messages")
+ChatTab:CreateSection("💬 پیام‌ها")
 
 ChatTab:CreateInput({
-    Name = "📝 Message 1",
-    PlaceholderText = "First message...",
+    Name = "📝 پیام اصلی",
+    PlaceholderText = "پیام اصلی...",
     RemoveTextAfterFocusLost = false,
     Flag = "Msg1",
     Callback = function(v) S.Message = v end
 })
 
 ChatTab:CreateInput({
-    Name = "📝 Message 2 (Alt)",
-    PlaceholderText = "Alternative message...",
+    Name = "📝 پیام جایگزین",
+    PlaceholderText = "پیام دوم...",
     RemoveTextAfterFocusLost = false,
     Flag = "Msg2",
     Callback = function(v) S.CustomMessage = v end
 })
 
-ChatTab:CreateSection("📋 Quick Messages")
+ChatTab:CreateSection("📋 پیام‌های آماده")
 
 ChatTab:CreateButton({
-    Name = "Set: Eizen On Top",
+    Name = "Xshadow Hacker op top",
+    Callback = function()
+        S.Message = "𝗫𝘀𝗵𝗮𝗱𝗼𝘄/𝗛𝗮𝗰𝗸𝗲𝗿 op top"
+        Rayfield:Notify({Title = "پیام", Content = "پیام ست شد", Duration = 2})
+    end
+})
+
+ChatTab:CreateButton({
+    Name = "ایزن هاب برتره",
     Callback = function()
         S.Message = "Eizen Hub On Top 🔥"
     end
 })
 
 ChatTab:CreateButton({
-    Name = "Set: Server Lagging",
+    Name = "سرور داره کرش میکنه",
     Callback = function()
-        S.Message = "Server is Lagging 💀"
+        S.Message = "سرور داره میترکه 💀"
     end
 })
 
 ChatTab:CreateButton({
-    Name = "Set: Get Crushed",
-    Callback = function()
-        S.Message = "Get Crushed Noobs 😂"
-    end
-})
-
-ChatTab:CreateButton({
-    Name = "Set: EMOJI Spam",
+    Name = "ایموجی اسپم",
     Callback = function()
         S.Message = "🔥🔥🔥😎😎😎💀💀💀"
     end
 })
 
 ChatTab:CreateButton({
-    Name = "Set: Empty (Crash)",
+    Name = "خالی (برای کرش)",
     Callback = function()
         S.Message = ""
     end
 })
 
 --// ============================================
---// PLAYER TAB
+--// تب پلیر
 --// ============================================
-PlayerTab:CreateSection("🎯 Target Player")
+PlayerTab:CreateSection("🎯 انتخاب هدف")
 
-local PlayerNames = {"All"}
+local PlayerNames = {"همه"}
 for _, p in pairs(Players:GetPlayers()) do
     if p ~= Player then
         table.insert(PlayerNames, p.Name)
@@ -310,73 +308,66 @@ for _, p in pairs(Players:GetPlayers()) do
 end
 
 PlayerTab:CreateDropdown({
-    Name = "Select Target",
+    Name = "انتخاب پلیر",
     Options = PlayerNames,
-    CurrentOption = "All",
+    CurrentOption = "همه",
     Flag = "Target",
     Callback = function(Option) S.TargetPlayer = Option end
 })
 
 PlayerTab:CreateButton({
-    Name = "🔄 Refresh Player List",
+    Name = "🔄 بروزرسانی لیست",
     Callback = function()
-        Rayfield:Notify({Title = "Refreshed", Content = "Reload script to update list", Duration = 3})
+        Rayfield:Notify({Title = "بروزرسانی", Content = "اسکریپت رو ریلود کن", Duration = 3})
     end
 })
 
-PlayerTab:CreateSection("🛡️ Self Protection")
+PlayerTab:CreateSection("🛡️ محافظت از خودت")
 
 PlayerTab:CreateToggle({
-    Name = "Anti-Kick Protection",
+    Name = "محافظت ضد کیک",
     CurrentValue = false,
     Flag = "AntiKick",
     Callback = function(v) S.AntiKick = v end
 })
 
-PlayerTab:CreateToggle({
-    Name = "Hide GUI on Crash",
-    CurrentValue = false,
-    Flag = "HideUI",
-    Callback = function(v) S.HideUI = v end
-})
-
 --// ============================================
---// SETTINGS TAB
+--// تب تنظیمات
 --// ============================================
-SettingsTab:CreateSection("⚙️ General Settings")
+SettingTab:CreateSection("⚙️ تنظیمات اصلی")
 
-SettingsTab:CreateToggle({
-    Name = "🔄 Auto Rejoin Server",
+SettingTab:CreateToggle({
+    Name = "🔄 ریجوین خودکار",
     CurrentValue = true,
     Flag = "AutoRejoin",
     Callback = function(v) S.AutoRejoin = v end
 })
 
-SettingsTab:CreateToggle({
-    Name = "🔁 Infinite Loop Spam",
+SettingTab:CreateToggle({
+    Name = "🔁 حلقه بی‌نهایت",
     CurrentValue = true,
     Flag = "InfiniteLoop",
-    Callback = function(v) S.SpamLoop = v end
+    Callback = function(v) S.InfiniteLoop = v end
 })
 
-SettingsTab:CreateSection("🎮 Player Cheats")
+SettingTab:CreateSection("🎮 هک‌های پلیر")
 
-SettingsTab:CreateToggle({
-    Name = "✈️ Fly (while crushing)",
+SettingTab:CreateToggle({
+    Name = "✈️ پرواز (هنگام کرشر)",
     CurrentValue = false,
     Flag = "Fly",
     Callback = function(v) S.FlyHack = v end
 })
 
-SettingsTab:CreateToggle({
-    Name = "🚪 Noclip (while crushing)",
+SettingTab:CreateToggle({
+    Name = "🚪 رد شدن از دیوار",
     CurrentValue = false,
     Flag = "Noclip",
     Callback = function(v) S.NoclipHack = v end
 })
 
-SettingsTab:CreateSlider({
-    Name = "🏃 Walk Speed",
+SettingTab:CreateSlider({
+    Name = "🏃 سرعت راه رفتن",
     Range = {16, 200},
     Increment = 5,
     CurrentValue = 16,
@@ -384,17 +375,17 @@ SettingsTab:CreateSlider({
     Callback = function(v) S.SpeedValue = v end
 })
 
-SettingsTab:CreateSection("🛠️ Server Actions")
+SettingTab:CreateSection("🛠️ عملیات سرور")
 
-SettingsTab:CreateButton({
-    Name = "🔁 Rejoin Server",
+SettingTab:CreateButton({
+    Name = "🔁 ریجوین سرور",
     Callback = function()
         TeleportService:TeleportToPlaceInstance(game.PlaceId, game.JobId, Player)
     end
 })
 
-SettingsTab:CreateButton({
-    Name = "🌍 Server Hop",
+SettingTab:CreateButton({
+    Name = "🌍 تغییر سرور",
     Callback = function()
         pcall(function()
             local res = HttpService:JSONDecode(game:HttpGet("https://games.roblox.com/v1/games/"..game.PlaceId.."/servers/Public?sortOrder=Asc&limit=100"))
@@ -408,51 +399,48 @@ SettingsTab:CreateButton({
     end
 })
 
-SettingsTab:CreateButton({
-    Name = "🚪 Leave Server",
+SettingTab:CreateButton({
+    Name = "🚪 ترک سرور",
     Callback = function()
-        Player:Kick("Left by Eizen Crusher")
+        Player:Kick("توسط ایزن کرشر ترک شد")
     end
 })
 
-SettingsTab:CreateButton({
-    Name = "🗑️ Destroy GUI",
+SettingTab:CreateButton({
+    Name = "🗑️ بستن منو",
     Callback = function()
         Rayfield:Destroy()
     end
 })
 
 --// ============================================
---// INFO TAB
+--// تب اطلاعات
 --// ============================================
-InfoTab:CreateSection("📊 Status")
+InfoTab:CreateSection("📊 وضعیت")
 
-local StatusRemote = InfoTab:CreateLabel("SendChat: Checking...")
-local StatusTextChat = InfoTab:CreateLabel("TextChat: Checking...")
+local StatusRemote = InfoTab:CreateLabel("SendChat: در حال بررسی...")
+local StatusTextChat = InfoTab:CreateLabel("TextChat: در حال بررسی...")
 
 task.spawn(function()
     while task.wait(2) do
-        StatusRemote:Set("SendChat: "..(SendChat and SendChat.Name or "NOT FOUND"))
-        StatusTextChat:Set("TextChat: "..(TextChatRemote and TextChatRemote.Name or "NOT FOUND"))
+        StatusRemote:Set("SendChat: "..(SendChat and SendChat.Name or "پیدا نشد ❌"))
+        StatusTextChat:Set("TextChat: "..(TextChatRemote and TextChatRemote.Name or "پیدا نشد ❌"))
     end
 end)
 
-InfoTab:CreateSection("📖 How to Use")
-InfoTab:CreateLabel("1. Toggle 'Enable Server Crusher'")
-InfoTab:CreateLabel("2. Select modes in 'Modes' tab")
-InfoTab:CreateLabel("3. Set message in 'Chat' tab")
-InfoTab:CreateLabel("4. Adjust delay (0.01 = max)")
-InfoTab:CreateLabel("5. Click START or use Main tab")
+InfoTab:CreateSection("📖 راهنما")
+InfoTab:CreateLabel("1. دکمه روشن کردن کرشر رو بزن")
+InfoTab:CreateLabel("2. از تب حالت‌ها یکی رو انتخاب کن")
+InfoTab:CreateLabel("3. از تب پیام، پیامتو تنظیم کن")
+InfoTab:CreateLabel("4. سرعت رو روی 0.01 بذار")
+InfoTab:CreateLabel("5. صبر کن تا سرور لگ بزنه")
 InfoTab:CreateLabel("")
-InfoTab:CreateLabel("⚠️ WARNING: May cause BANS!")
-InfoTab:CreateLabel("⚠️ Use on ALT accounts only!")
-InfoTab:CreateLabel("⚠️ I'm not responsible for bans")
+InfoTab:CreateLabel("⚠️ اخطار: ممکنه بن شی!")
+InfoTab:CreateLabel("⚠️ فقط روی اکانت فرعی استفاده کن!")
 
 --// ============================================
---// LOOPS
+--// حلقه اصلی
 --// ============================================
-
---// Main Crusher
 task.spawn(function()
     while task.wait() do
         if S.Enabled then
@@ -537,7 +525,7 @@ task.spawn(function()
     end
 end)
 
---// Fly
+--// پرواز
 local flyBV, flyBG
 RunService.RenderStepped:Connect(function()
     pcall(function()
@@ -555,8 +543,15 @@ RunService.RenderStepped:Connect(function()
                 flyBG.P = 9e4
             end
             hum.PlatformStand = true
-            flyBV.Velocity = Vector3.new(0, 0, 0)
-            flyBG.CFrame = workspace.CurrentCamera.CFrame
+            local dir = Vector3.new(0, 0, 0)
+            if UIS:IsKeyDown(Enum.KeyCode.W) then dir = dir + Camera.CFrame.LookVector end
+            if UIS:IsKeyDown(Enum.KeyCode.S) then dir = dir - Camera.CFrame.LookVector end
+            if UIS:IsKeyDown(Enum.KeyCode.A) then dir = dir - Camera.CFrame.RightVector end
+            if UIS:IsKeyDown(Enum.KeyCode.D) then dir = dir + Camera.CFrame.RightVector end
+            if UIS:IsKeyDown(Enum.KeyCode.Space) then dir = dir + Vector3.new(0, 1, 0) end
+            if UIS:IsKeyDown(Enum.KeyCode.LeftControl) then dir = dir - Vector3.new(0, 1, 0) end
+            flyBV.Velocity = dir * 80
+            flyBG.CFrame = Camera.CFrame
         else
             if flyBV then flyBV:Destroy() flyBV = nil end
             if flyBG then flyBG:Destroy() flyBG = nil end
@@ -573,7 +568,7 @@ RunService.RenderStepped:Connect(function()
     end)
 end)
 
---// Anti-Kick Protection
+--// ضد کیک
 task.spawn(function()
     while task.wait(1) do
         if S.AntiKick then
@@ -584,7 +579,7 @@ task.spawn(function()
     end
 end)
 
---// Auto Rejoin
+--// ریجوین خودکار
 task.spawn(function()
     while task.wait(5) do
         if S.AutoRejoin and not Player.Parent then
@@ -594,17 +589,18 @@ task.spawn(function()
     end
 end)
 
---// Notification
+--// نوتیف
 if SendChat then
     Rayfield:Notify({
-        Title = "Eizen Crusher Loaded ✅",
-        Content = "SendChat found: "..SendChat.Name,
+        Title = "ایزن کرشر ✅",
+        Content = "SendChat پیدا شد: "..SendChat.Name,
         Duration = 5
     })
 else
     Rayfield:Notify({
-        Title = "⚠️ Warning",
-        Content = "SendChat not found! Some games don't have it.",
+        Title = "⚠️ اخطار",
+        Content = "SendChat پیدا نشد! بعضی بازی‌ها ندارن",
         Duration = 5
     })
 end
+ 🔥
